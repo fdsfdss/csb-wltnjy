@@ -1,4 +1,3 @@
-
 import ndarray from "ndarray";
 import { Tensor } from "onnxruntime-web";
 import ops from "ndarray-ops";
@@ -8,14 +7,11 @@ import { yoloClasses } from "../../data/yolo_classes";
 import { useState } from "react";
 import { useEffect } from "react";
 import { runModelUtils } from "../../utils";
-import { useRef } from 'react';
-
-const alertSound = 'public/alert.mp3';
 
 const RES_TO_MODEL: [number[], string][] = [
   [[256,256], "yolov7-tiny_256x256.onnx"],
-  //[[320, 320], "yolov7-tiny_320x320.onnx"],
-  //[[640, 640], "yolov7-tiny_640x640.onnx"],
+  [[320, 320], "yolov7-tiny_320x320.onnx"],
+  [[640, 640], "yolov7-tiny_640x640.onnx"],
 ];
 
 const Yolo = (props: any) => {
@@ -24,10 +20,6 @@ const Yolo = (props: any) => {
   );
   const [modelName, setModelName] = useState<string>(RES_TO_MODEL[0][1]);
   const [session, setSession] = useState<any>(null);
-  const [totalObjectsColor, setTotalObjectsColor] = useState<string>("");
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-
 
   useEffect(() => {
     const getSession = async () => {
@@ -143,7 +135,6 @@ const Yolo = (props: any) => {
     const g = Math.round(255 * conf);
     return `rgb(${r},${g},0)`;
   };
-  const [detectedObjectsCount, setDetectedObjectsCount] = useState<number>(0);
 
   const postprocess = async (
     tensor: Tensor,
@@ -154,8 +145,6 @@ const Yolo = (props: any) => {
     const dy = ctx.canvas.height / modelResolution[1];
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    let personDetected = false; // Flag to check if a person is detected
-
     for (let i = 0; i < tensor.dims[0]; i++) {
       let [batch_id, x0, y0, x1, y1, cls_id, score] = tensor.data.slice(
         i * 7,
@@ -182,20 +171,7 @@ const Yolo = (props: any) => {
         " " +
         score.toString() +
         "%";
-      let color = conf2color(score / 100);
-
-      // Check if a person is detected (assuming person class ID is 0, update as needed)
-      if (cls_id === 0) {
-        personDetected = true;
-        color = "rgba(255, 0, 0, 0.5)";
-        if (audioRef.current) {
-          audioRef.current.play();
-        }
-        
-      }else {
-        // For other classes, you can use the original color calculation
-        color = conf2color(score / 100);
-      }
+      const color = conf2color(score / 100);
 
       ctx.strokeStyle = color;
       ctx.lineWidth = 3;
@@ -208,32 +184,19 @@ const Yolo = (props: any) => {
       ctx.fillStyle = color.replace(")", ", 0.2)").replace("rgb", "rgba");
       ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
     }
-    setDetectedObjectsCount(tensor.dims[0]);
-      // Change the color of "Total Objects Detected" to red if a person is detected
-    if (personDetected) {
-      setTotalObjectsColor("red");
-
-    } else {
-      setTotalObjectsColor(""); // Reset to default color
-    }
   };
 
   return (
-    <div>
-      <ObjectDetectionCamera
-        width={props.width}
-        height={props.height}
-        preprocess={preprocess}
-        postprocess={postprocess}
-        resizeCanvasCtx={resizeCanvasCtx}
-        session={session}
-        changeModelResolution={changeModelResolution}
-        modelName={modelName}
-      />
-      <p style={{ color: totalObjectsColor }}>&nbsp;&nbsp;&nbsp;&nbsp;Total Objects Detected: {detectedObjectsCount}</p>
-      <audio ref={audioRef} src="/alert.mp3" preload="auto"></audio>
-
-    </div>
+    <ObjectDetectionCamera
+      width={props.width}
+      height={props.height}
+      preprocess={preprocess}
+      postprocess={postprocess}
+      resizeCanvasCtx={resizeCanvasCtx}
+      session={session}
+      changeModelResolution={changeModelResolution}
+      modelName={modelName}
+    />
   );
 };
 
