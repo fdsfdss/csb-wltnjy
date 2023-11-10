@@ -113,15 +113,10 @@ const WebcamComponent = (props: any) => {
       // Countdown logic
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
-    } else {
-      // Once countdown is over, set SSR to false
-      setSSR(false);
-    }
+    } 
   }, [countdown]);
 
-  if (SSR) {
-    return <div>Loading...</div>;
-  }else {
+
 
   return (
     <div className="flex flex-row flex-wrap  justify-evenly align-center w-full">
@@ -216,7 +211,7 @@ const WebcamComponent = (props: any) => {
       </div>
     </div>
   );
-  }
+  
 };
 
 export default WebcamComponent;
