@@ -7,6 +7,9 @@ import { yoloClasses } from "../../data/yolo_classes";
 import { useState } from "react";
 import { useEffect } from "react";
 import { runModelUtils } from "../../utils";
+import { useRef } from 'react';
+
+
 
 const RES_TO_MODEL: [number[], string][] = [
   [[256,256], "yolov7-tiny_256x256.onnx"],
@@ -20,6 +23,7 @@ const Yolo = (props: any) => {
   );
   const [modelName, setModelName] = useState<string>(RES_TO_MODEL[0][1]);
   const [session, setSession] = useState<any>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const getSession = async () => {
@@ -135,6 +139,7 @@ const Yolo = (props: any) => {
     const g = Math.round(255 * conf);
     return `rgb(${r},${g},0)`;
   };
+  const [detectedObjectsCount, setDetectedObjectsCount] = useState<number>(0);
 
   const postprocess = async (
     tensor: Tensor,
@@ -145,12 +150,17 @@ const Yolo = (props: any) => {
     const dy = ctx.canvas.height / modelResolution[1];
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    let localDetectedObjectsCount = 0; // Use a local variable for counting
+    let personDetected = false; // Flag to check if a person is detected
+
     for (let i = 0; i < tensor.dims[0]; i++) {
       let [batch_id, x0, y0, x1, y1, cls_id, score] = tensor.data.slice(
         i * 7,
         i * 7 + 7
       );
-
+      if (score > 0.2) {
+        localDetectedObjectsCount++; // Increment the counter for each detected object
+      }
       // scale to canvas size
       [x0, x1] = [x0, x1].map((x: any) => x * dx);
       [y0, y1] = [y0, y1].map((x: any) => x * dy);
@@ -171,8 +181,19 @@ const Yolo = (props: any) => {
         " " +
         score.toString() +
         "%";
-      const color = conf2color(score / 100);
-
+      let color = conf2color(score / 100);
+      if (cls_id === 0) {
+        personDetected = true;
+        color = "rgba(255, 0, 0, 0.5)";
+        if (audioRef.current) {
+          audioRef.current.play();
+        }
+        
+      }else {
+        // For other classes, you can use the original color calculation
+        color = conf2color(score / 100);
+      }
+      
       ctx.strokeStyle = color;
       ctx.lineWidth = 3;
       ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
@@ -184,19 +205,26 @@ const Yolo = (props: any) => {
       ctx.fillStyle = color.replace(")", ", 0.2)").replace("rgb", "rgba");
       ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
     }
+      setDetectedObjectsCount(localDetectedObjectsCount);
   };
 
   return (
-    <ObjectDetectionCamera
-      width={props.width}
-      height={props.height}
-      preprocess={preprocess}
-      postprocess={postprocess}
-      resizeCanvasCtx={resizeCanvasCtx}
-      session={session}
-      changeModelResolution={changeModelResolution}
-      modelName={modelName}
-    />
+    <div style={{ textAlign: 'center' }}>
+      <ObjectDetectionCamera
+        width={props.width}
+        height={props.height}
+        preprocess={preprocess}
+        postprocess={postprocess}
+        resizeCanvasCtx={resizeCanvasCtx}
+        session={session}
+        changeModelResolution={changeModelResolution}
+        modelName={modelName}
+
+      />
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;Total Objects Detected: {detectedObjectsCount}</p>
+      <audio ref={audioRef} src="/alert.mp3" preload="auto"></audio>
+
+    </div>
   );
 };
 

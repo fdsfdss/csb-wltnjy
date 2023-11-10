@@ -9,6 +9,7 @@ const WebcamComponent = (props: any) => {
   const webcamRef = useRef<Webcam>(null);
   const videoCanvasRef = useRef<HTMLCanvasElement>(null);
   const liveDetection = useRef<boolean>(false);
+  const [camera, setCamera] = useState("front"); // Add this state at the beginning of your component
 
   const [facingMode, setFacingMode] = useState<string>("environment");
   const originalSize = useRef<number[]>([0, 0]);
@@ -160,16 +161,7 @@ const WebcamComponent = (props: any) => {
       <div className="flex flex-col justify-center items-center">
         <div className="flex gap-1 flex-row flex-wrap justify-center items-center m-5">
           <div className="flex gap-1 justify-center items-center items-stretch">
-            <button
-              onClick={async () => {
-                const startTime = Date.now();
-                await processImage();
-                setTotalTime(Date.now() - startTime);
-              }}
-              className="p-2 border-dashed border-2 rounded-xl hover:translate-y-1 "
-            >
-              Capture Photo
-            </button>
+
             <button
               onClick={async () => {
                 if (liveDetection.current) {
@@ -179,14 +171,21 @@ const WebcamComponent = (props: any) => {
                 }
               }}
               //on hover, shift the button up
-              className={`
-              p-2  border-dashed border-2 rounded-xl hover:translate-y-1 
-              ${liveDetection.current ? "bg-white text-black" : ""}
-              
-              `}
+              className={"p-2 rounded-xl hover:translate-y-1 bg-green-500 text-white"}
             >
               Live Detection
             </button>
+            <button
+            onClick={() => {
+              reset();
+              const newFacingMode = facingMode === "user" ? "environment" : "user";
+              setFacingMode(newFacingMode);
+              setCamera(newFacingMode === "user" ? "front" : "rear"); // Update the camera state
+            }}
+            className="p-2 rounded-xl hover:translate-y-1 bg-blue-500 text-white"
+          >
+            Toggle Front/Rear Camera
+          </button>
           </div>
           <div className="flex gap-1 justify-center items-center items-stretch">
             <button
@@ -194,7 +193,7 @@ const WebcamComponent = (props: any) => {
                 reset();
                 setFacingMode(facingMode === "user" ? "environment" : "user");
               }}
-              className="p-2  border-dashed border-2 rounded-xl hover:translate-y-1 "
+              className="p-2 rounded-xl hover:translate-y-1 bg-blue-500 text-white"
             >
               Switch Camera
             </button>
@@ -203,37 +202,23 @@ const WebcamComponent = (props: any) => {
                 reset();
                 props.changeModelResolution();
               }}
-              className="p-2  border-dashed border-2 rounded-xl hover:translate-y-1 "
+              className="p-2 rounded-xl hover:translate-y-1 bg-blue-500 text-white"
             >
               Change Model
             </button>
             <button
               onClick={reset}
-              className="p-2  border-dashed border-2 rounded-xl hover:translate-y-1 "
+              className="p-2 rounded-xl hover:translate-y-1 bg-red-500 text-white"
             >
               Reset
             </button>
           </div>
         </div>
         <div>Using {props.modelName}</div>
+        <div>{"Total FPS: " + (1000 / totalTime).toFixed(2) + "fps"}</div>
         <div className="flex gap-3 flex-row flex-wrap justify-between items-center px-5 w-full">
-          <div>
-            {"Model Inference Time: " + inferenceTime.toFixed() + "ms"}
-            <br />
-            {"Total Time: " + totalTime.toFixed() + "ms"}
-            <br />
-            {"Overhead Time: +" + (totalTime - inferenceTime).toFixed(2) + "ms"}
-          </div>
-          <div>
-            <div>
-              {"Model FPS: " + (1000 / inferenceTime).toFixed(2) + "fps"}
-            </div>
-            <div>{"Total FPS: " + (1000 / totalTime).toFixed(2) + "fps"}</div>
-            <div>
-              {"Overhead FPS: " +
-                (1000 * (1 / totalTime - 1 / inferenceTime)).toFixed(2) +
-                "fps"}
-            </div>
+          <div className="w-full flex justify-end"> {/* This div will take full width and align its children to the end (right) */}
+            
           </div>
         </div>
       </div>
