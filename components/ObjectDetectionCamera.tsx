@@ -10,6 +10,8 @@ const WebcamComponent = (props: any) => {
   const videoCanvasRef = useRef<HTMLCanvasElement>(null);
   const liveDetection = useRef<boolean>(false);
   const [camera, setCamera] = useState("front"); // Add this state at the beginning of your component
+  const [isMirrored, setIsMirrored] = useState(false);
+  const [countdown, setCountdown] = useState(15); // Countdown starts at 20 seconds
 
   const [facingMode, setFacingMode] = useState<string>("environment");
   const originalSize = useRef<number[]>([0, 0]);
@@ -107,20 +109,19 @@ const WebcamComponent = (props: any) => {
 
   // close camera when browser tab is minimized
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        liveDetection.current = false;
-      }
-      // set SSR to true to prevent webcam from loading when tab is not active
-      setSSR(document.hidden);
-    };
-    setSSR(document.hidden);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
+    if (countdown > 0) {
+      // Countdown logic
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else {
+      // Once countdown is over, set SSR to false
+      setSSR(false);
+    }
+  }, [countdown]);
 
   if (SSR) {
     return <div>Loading...</div>;
-  }
+  }else {
 
   return (
     <div className="flex flex-row flex-wrap  justify-evenly align-center w-full">
@@ -129,7 +130,7 @@ const WebcamComponent = (props: any) => {
         className="flex items-center justify-center webcam-container"
       >
         <Webcam
-          mirrored={facingMode === "user"}
+          mirrored={isMirrored}
           audio={false}
           ref={webcamRef}
           screenshotFormat="image/jpeg"
@@ -188,24 +189,15 @@ const WebcamComponent = (props: any) => {
           </button>
           </div>
           <div className="flex gap-1 justify-center items-center items-stretch">
-            <button
-              onClick={() => {
-                reset();
-                setFacingMode(facingMode === "user" ? "environment" : "user");
-              }}
-              className="p-2 rounded-xl hover:translate-y-1 bg-blue-500 text-white"
-            >
-              Switch Camera
-            </button>
-            <button
-              onClick={() => {
-                reset();
-                props.changeModelResolution();
-              }}
-              className="p-2 rounded-xl hover:translate-y-1 bg-blue-500 text-white"
-            >
-              Change Model
-            </button>
+          <button
+            onClick={() => {
+              reset();
+              setIsMirrored(!isMirrored); // Toggle the mirroring
+            }}
+            className="p-2 rounded-xl hover:translate-y-1 bg-blue-500 text-white"
+          >
+            Mirror Video
+          </button>
             <button
               onClick={reset}
               className="p-2 rounded-xl hover:translate-y-1 bg-red-500 text-white"
@@ -214,7 +206,7 @@ const WebcamComponent = (props: any) => {
             </button>
           </div>
         </div>
-        <div>Using {props.modelName}</div>
+        <div>{countdown > 0 ? `Please wait ${countdown} seconds to load model...` : 'Model loaded'}</div>
         <div>{"Total FPS: " + (1000 / totalTime).toFixed(2) + "fps"}</div>
         <div className="flex gap-3 flex-row flex-wrap justify-between items-center px-5 w-full">
           <div className="w-full flex justify-end"> {/* This div will take full width and align its children to the end (right) */}
@@ -224,6 +216,7 @@ const WebcamComponent = (props: any) => {
       </div>
     </div>
   );
+  }
 };
 
 export default WebcamComponent;
