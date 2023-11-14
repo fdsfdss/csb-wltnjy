@@ -15,7 +15,7 @@ export default function Home() {
             <Image src={icon} alt="Masyen Logo" width={50} height={50} />
           </a>
 
-          <h1 className="m-5 text-xl font-bold">Masyen Object Detection</h1>
+          <h1 className="m-5 text-xl font-bold">Masyen Object Detecction</h1>
         </div>
         <Yolo />
       </main>
