@@ -120,7 +120,7 @@ body {
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: rgb(255, 255, 255); 
+  background: grey; 
 }
 
 a {

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from 'next/image'; // Import the Image component from Next.js
 import icon from 'public/icon.png'; // Import your icon (adjust the path as needed)
+import styles from '../styles/Home.module.css'; // Import the Home module CSS file
+
 
 export default function Home() {
   return (
@@ -15,7 +17,8 @@ export default function Home() {
             <Image src={icon} alt="Masyen Logo" width={50} height={50} />
           </a>
 
-          <h1 className="m-5 text-xl font-bold">Masyen Object Detecction</h1>
+          <h1 className="m-5 text-xl font-bold">Masyen Object Detection</h1>
+          
         </div>
         <Yolo />
       </main>
