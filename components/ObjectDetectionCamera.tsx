@@ -11,7 +11,7 @@ const WebcamComponent = (props: any) => {
   const liveDetection = useRef<boolean>(false);
   const [camera, setCamera] = useState("front"); // Add this state at the beginning of your component
   const [isMirrored, setIsMirrored] = useState(false);
-  const [countdown, setCountdown] = useState(15); // Countdown starts at 20 seconds
+  const [countdown, setCountdown] = useState(30); // Countdown starts at 20 seconds
 
   const [facingMode, setFacingMode] = useState<string>("environment");
   const originalSize = useRef<number[]>([0, 0]);
